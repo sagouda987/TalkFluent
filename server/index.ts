@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import http from 'node:http';
 import next from 'next';
 import { Server } from 'socket.io';
@@ -23,6 +24,11 @@ const port = Number(process.env.PORT ?? 3000);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
+
+const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? process.env.NEXT_PUBLIC_APP_URL ?? '*')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
 const liveRooms = new Map<string, Map<string, LiveParticipant>>();
 const userSockets = new Map<string, Map<string, Set<string>>>();
@@ -72,7 +78,7 @@ app
 
     const io = new Server(server, {
       cors: {
-        origin: process.env.NEXT_PUBLIC_APP_URL ?? '*',
+        origin: allowedOrigins.length === 1 ? allowedOrigins[0] : allowedOrigins,
         methods: ['GET', 'POST']
       }
     });
